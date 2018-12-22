@@ -23,9 +23,9 @@ service ngcp-rtpengine-daemon start
 ```
 
 ## Ansible Galaxy
-https://galaxy.ansible.com/***********
+https://galaxy.ansible.com/mickaelh51/ar_rtpengine_from_sources
 ```
-ansible-galaxy install mickaelh51.**********
+ansible-galaxy install mickaelh51.ar_rtpengine_from_sources
 ```
 
 ## Enhancements

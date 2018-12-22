@@ -2,11 +2,13 @@
 - name: Choose mysql variable for Debian/Sretch
   set_fact:
     mysql_package: 'default-libmysqlclient-dev'
+    xtables_path: '/usr/lib/x86_64-linux-gnu/xtables'
   when: ansible_distribution == 'Debian' and ansible_distribution_release == 'stretch'
 
 - name: Choose mysql variable for Debian/Jessie
   set_fact:
     mysql_package: 'libmysqlclient-dev'
+    xtables_path: '/lib/xtables'
   when: ansible_distribution == 'Debian' and ansible_distribution_release == 'jessie'
 
 - debug:
@@ -14,7 +16,7 @@
 
 - name: add backports repository for Debian/Jessie
   apt_repository:
-    repo: 'deb http://http.debian.net/debian {{ansible_distribution_release}}-backports main contrib non-free'
+    repo: 'deb http://http.debian.net/debian {{ ansible_distribution_release }}-backports main contrib non-free'
     state: present
     update_cache: yes
   when: ansible_distribution == 'Debian' and ansible_distribution_release == 'jessie'
@@ -80,8 +82,7 @@
 - name: Copy libxt_RTPENGINE.so
   copy:
     src: /usr/local/src/rtpengine-{{ rtpengine_version }}/iptables-extension/libxt_RTPENGINE.so
-    #dest: /usr/lib/x86_64-linux-gnu/xtables/libxt_RTPENGINE.so
-    dest: /lib/xtables/libxt_RTPENGINE.so
+    dest: "{{ xtables_path }}/libxt_RTPENGINE.so"
     remote_src: yes
 
 - name: Copy kernel-module to {{ uname_result.stdout }}
@@ -138,6 +139,3 @@
 
 - debug:
     msg: "You can start rtpengine with : service ngcp-rtpengine-daemon start"
-
-#- name:         'restart rtpengine'
-#  service:      name=ngcp-rtpengine-daemon state=restarted
