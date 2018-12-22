@@ -1,0 +1,19 @@
+- name: Change Config ngcp-rtpengine-daemon.service
+  replace:
+    path: "{{ item.path }}"
+    regexp: "{{ item.regexp1 }}"
+    replace: "{{ item.replace }}"
+  with_items:
+    - { path: '/etc/systemd/system/ngcp-rtpengine-daemon.service', regexp1: '/usr/sbin/', replace: '/usr/local/sbin/'}
+    - { path: '/etc/systemd/system/ngcp-rtpengine-daemon.service', regexp1: '/etc/rtpengine/', replace: '/usr/local/etc/rtpengine/'}
+
+- name: 'Change Config ngcp-rtpengine-daemon default file'
+  replace:
+    path: "{{ item.path }}"
+    regexp: "{{ item.regexp1 }}"
+    replace: "{{ item.replace }}"
+  with_items:
+    - { path: '/etc/default/ngcp-rtpengine-daemon', regexp1: 'RUN_RTPENGINE=no', replace: 'RUN_RTPENGINE=yes'}
+    - { path: '/etc/default/ngcp-rtpengine-daemon', regexp1: '/etc/rtpengine/', replace: '/usr/local/etc/rtpengine/'}
+    - { path: '/etc/default/ngcp-rtpengine-daemon', regexp1: '#SET_USER=root', replace: 'SET_USER=rtpengine'}
+    - { path: '/etc/default/ngcp-rtpengine-daemon', regexp1: '#SET_GROUP=root', replace: 'SET_GROUP=rtpengine'}

@@ -1,0 +1,18 @@
+---
+galaxy_info:
+  author: Mickael HUBERT
+  description: RTPEngine installation (Compilation from sources)
+  license: MIT
+  min_ansible_version: 2.1
+  platforms:
+  - name: Debian
+    versions:
+     - jessie
+     - stretch
+  galaxy_tags:
+    - networking
+    - packaging
+    - system
+    - voip
+
+dependencies: []

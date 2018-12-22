@@ -1,0 +1,54 @@
+rtpengine_local_ip:  "10.1.0.225"
+rtpengine_public_ip:  "10.1.1.225"
+rtpengine_version:  "mr6.4.2.1"
+rtpengine_nglisten_port:  12221
+rtpengine_rtp_port_start:  10000
+rtpengine_rtp_port_end:  20000
+rtpengine_group: rtpengine
+rtpengine_user: rtpengine
+rtpengine_packages:
+  - git
+  - gcc
+  - flex
+  - bison
+  - "{{ mysql_package }}"
+  - make
+  - libssl-dev
+  - libcurl4-openssl-dev
+  - libxml2-dev
+  - libpcre3-dev
+  - unixodbc-dev
+  - libunistring-dev
+  - debhelper
+  - iptables-dev
+  - libcurl4-openssl-dev
+  - libpcre3-dev
+  - libxmlrpc-core-c3-dev
+  - markdown
+  - libglib2.0-dev
+  - libhiredis-dev
+  - dkms
+  - libevent-dev
+  - libavcodec-dev
+  - libavfilter-dev
+  - libavformat-dev
+  - libavresample-dev
+  - libjson-glib-dev
+  - libpcap0.8-dev
+  - libbencode-perl
+  - libcrypt-rijndael-perl
+  - libdigest-hmac-perl
+  - libio-socket-inet6-perl
+  - libsocket6-perl
+  - keyutils
+  - liblocale-gettext-perl
+  - libnfsidmap2
+  - libtext-charwidth-perl
+  - libtext-wrapi18n-perl
+  - libtirpc1
+  - module-assistant
+  - nfs-common
+  - rpcbind
+  - xtables-addons-common
+  - xtables-addons-dkms
+  - linux-headers-{{ uname_result.stdout }}

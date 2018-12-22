@@ -1,0 +1,143 @@
+---
+- name: Choose mysql variable for Debian/Sretch
+  set_fact:
+    mysql_package: 'default-libmysqlclient-dev'
+  when: ansible_distribution == 'Debian' and ansible_distribution_release == 'stretch'
+
+- name: Choose mysql variable for Debian/Jessie
+  set_fact:
+    mysql_package: 'libmysqlclient-dev'
+  when: ansible_distribution == 'Debian' and ansible_distribution_release == 'jessie'
+
+- debug:
+    msg: "Mysql package is {{ mysql_package }} for {{ ansible_distribution }}/{{ ansible_distribution_version }}"
+
+- name: add backports repository for Debian/Jessie
+  apt_repository:
+    repo: 'deb http://http.debian.net/debian {{ansible_distribution_release}}-backports main contrib non-free'
+    state: present
+    update_cache: yes
+  when: ansible_distribution == 'Debian' and ansible_distribution_release == 'jessie'
+
+- name: find kernel version
+  shell: uname -r
+  ignore_errors: yes
+  register: uname_result
+
+- debug:
+    msg: kernel is {{ uname_result.stdout }}
+
+- name: 'Install Prerequisites rtpengine packages'
+  package:
+    name: "{{ rtpengine_packages }}"
+    state: present
+  register: task_result
+  until: task_result is succeeded
+  retries: 10
+  delay: 1
+
+- name: install libavutil-dev for Debian/Jessie
+  apt:
+    name: libavutil-dev
+    state: latest
+    default_release: jessie-backports
+    update_cache: yes
+  register: task_result
+  until: task_result is succeeded
+  retries: 10
+  delay: 1
+  when: ansible_distribution == 'Debian' and ansible_distribution_release == 'jessie'
+
+- name: Create rtpengine Group
+  group: "name={{ rtpengine_group }} state=present"
+
+- name: Add rtpengine User
+  user: "name={{ rtpengine_user }} comment='RTPEngine process user' shell=/sbin/nologin group={{ rtpengine_group }}"
+
+- name: 'Git clone rtpengine'
+  git:
+    repo: https://github.com/sipwise/rtpengine.git
+    dest: /usr/local/src/rtpengine-{{ rtpengine_version }}
+    clone: yes
+    version: "{{ rtpengine_version }}"
+
+- name: Running make for rtpengine
+  make:
+    chdir: "{{ item.chdir }}"
+  with_items:
+    - { chdir: '/usr/local/src/rtpengine-{{ rtpengine_version }}/daemon' }
+    - { chdir: '/usr/local/src/rtpengine-{{ rtpengine_version }}/iptables-extension' }
+    - { chdir: '/usr/local/src/rtpengine-{{ rtpengine_version }}/kernel-module' }
+
+
+- name: Copy iptables-extension
+  copy:
+    src: /usr/local/src/rtpengine-{{ rtpengine_version }}/daemon/rtpengine
+    dest: /usr/local/sbin/rtpengine
+    remote_src: yes
+    mode: u=rwx
+
+- name: Copy libxt_RTPENGINE.so
+  copy:
+    src: /usr/local/src/rtpengine-{{ rtpengine_version }}/iptables-extension/libxt_RTPENGINE.so
+    #dest: /usr/lib/x86_64-linux-gnu/xtables/libxt_RTPENGINE.so
+    dest: /lib/xtables/libxt_RTPENGINE.so
+    remote_src: yes
+
+- name: Copy kernel-module to {{ uname_result.stdout }}
+  copy:
+    src: /usr/local/src/rtpengine-{{ rtpengine_version }}/kernel-module/xt_RTPENGINE.ko
+    dest: /lib/modules/{{ uname_result.stdout }}/updates/xt_RTPENGINE.ko
+    remote_src: yes
+
+- name: Run depmod
+  command: depmod -a
+
+- name: Running depmod -a for xt_RTPENGINE.ko module
+  modprobe:
+    name: xt_RTPENGINE
+    state: present
+
+- name: Copying rtpengine ngcp-rtpengine-iptables-setup
+  copy:
+    src: /usr/local/src/rtpengine-{{ rtpengine_version }}/debian/ngcp-rtpengine-iptables-setup
+    dest: /usr/local/sbin/ngcp-rtpengine-iptables-setup
+    remote_src: yes
+    mode: u=rwx
+
+- name: Copying rtpengine ngcp-rtpengine-daemon.default
+  copy:
+    src: /usr/local/src/rtpengine-{{ rtpengine_version }}/debian/ngcp-rtpengine-daemon.default
+    dest: /etc/default/ngcp-rtpengine-daemon
+    remote_src: yes
+  notify:
+    - Change Config ngcp-rtpengine-daemon default file
+
+- name: Copying rtpengine ngcp-rtpengine-daemon.service
+  copy:
+    src: /usr/local/src/rtpengine-{{ rtpengine_version }}/debian/ngcp-rtpengine-daemon.service
+    dest: /etc/systemd/system/ngcp-rtpengine-daemon.service
+    remote_src: yes
+  notify:
+    - Change Config ngcp-rtpengine-daemon.service
+
+- name: reload systemd
+  systemd:
+    daemon_reload: yes
+
+- name: Create Folder /usr/local/etc/rtpengine/
+  file:
+   path: "/usr/local/etc/rtpengine"
+   recurse: yes
+   state: directory
+
+- name: 'Copy rtpengine config file to /usr/local/etc/rtpengine'
+  template:
+    src: templates/rtpengine.j2
+    dest: /usr/local/etc/rtpengine/rtpengine.conf
+
+- debug:
+    msg: "You can start rtpengine with : service ngcp-rtpengine-daemon start"
+
+#- name:         'restart rtpengine'
+#  service:      name=ngcp-rtpengine-daemon state=restarted

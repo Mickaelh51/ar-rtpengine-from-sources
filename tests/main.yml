@@ -1,0 +1,23 @@
+---
+- name: RTPEngine installation by sources compilation
+  hosts: all
+  become: yes
+  become_user: root
+  become_method: sudo
+  vars:
+    - templatesdir: "../templates"
+
+  vars_files:
+    - ../vars/main.yml
+
+  handlers:
+    - include: '../handlers/main.yml'
+
+  pre_tasks:
+    - name: Verify Ansible version requirements.
+      assert:
+        that: "ansible_version.full is version_compare('2.1', '>=')"
+        msg: >
+          "You must update Ansible to at least 2.1"
+  roles:
+    - ../ar-rtpengine-from-sources
