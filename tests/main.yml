@@ -7,9 +7,6 @@
   vars:
     - templatesdir: "../templates"
 
-  vars_files:
-    - ../vars/main.yml
-
   handlers:
     - include: '../handlers/main.yml'
 

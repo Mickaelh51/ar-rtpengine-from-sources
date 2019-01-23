@@ -122,6 +122,13 @@
   notify:
     - Change Config ngcp-rtpengine-daemon.service
 
+- name: Copying rtpengine-ctl
+  copy:
+    src: /usr/local/src/rtpengine-{{ rtpengine_version }}/utils/rtpengine-ctl
+    dest: /usr/sbin/rtpengine-ctl
+    remote_src: yes
+    mode: 0740
+
 - name: reload systemd
   systemd:
     daemon_reload: yes
